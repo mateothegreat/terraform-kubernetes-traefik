@@ -1,0 +1,143 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSStore
+metadata:
+  name: tls-store-gateway
+  namespace: default
+spec:
+  defaultCertificate:
+    secretName: tls-nvrai
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoptions
+  namespace: default
+spec:
+  minVersion: VersionTLS12
+  cipherSuites:
+    - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+    - TLS_AES_256_GCM_SHA384
+    - TLS_AES_128_GCM_SHA256
+    - TLS_CHACHA20_POLY1305_SHA256
+    - TLS_FALLBACK_SCSV
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+  sniStrict: false
+
+---
+
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: path-replace-base
+#  namespace: default
+#spec:
+#  replacePathRegex:
+#    regex: ^/(.*)/(.*)/(.*)
+#    replacement: /$3
+#
+#---
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: internal-only
+#  namespace: default
+#spec:
+#  plugin:
+#    blockpath:
+#      regex: ["^/metrics"]
+#
+#---
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: rate-limit-low
+#  namespace: default
+#spec:
+#  rateLimit:
+#    average: 1
+#    burst: 2
+#
+#---
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: security-response-headers
+#  namespace: default
+#spec:
+#  headers:
+#    frameDeny: true
+#    sslRedirect: true
+#    browserXssFilter: true
+#    contentTypeNosniff: true
+#    stsIncludeSubdomains: true
+#    stsPreload: true
+#    stsSeconds: 31536000
+#
+#---
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: forwardauth-rbac
+#  namespace: default
+#spec:
+#  forwardAuth:
+#    address: http://mlfabric-platform-services-rbac.services.svc.cluster.local:8080/rbac/tokens/validate
+#    authResponseHeaders:
+#      - Remote-User
+#      - Remote-Name
+#      - Remote-Email
+#      - Remote-Groups
+#---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: simpleingressroute
+  namespace: default
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`api.nvr.ai`) && PathPrefix(`/rbac`)
+      kind: Rule
+#      middlewares:
+#        - name: rate-limit-low
+#        - name: forwardauth-rbac
+#        - name: path-replace-base
+#        - name: security-response-headers
+      services:
+        - name: rbac
+          port: 8080
+  tls:
+    secretName: tls-nvrai
+    options:
+      name: tlsoptions
+      namespace: default
+
+---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-metrics
+  namespace: default
+spec:
+  entryPoints:
+    - http
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/metrics`)
+      services:
+        - name: prometheus@internal
+          kind: TraefikService
+#      middlewares:
+#        - name: blockpath
