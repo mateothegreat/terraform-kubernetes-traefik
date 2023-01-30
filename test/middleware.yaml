@@ -56,32 +56,32 @@ spec:
 #      regex: ["^/metrics"]
 #
 #---
-#apiVersion: traefik.containo.us/v1alpha1
-#kind: Middleware
-#metadata:
-#  name: rate-limit-low
-#  namespace: default
-#spec:
-#  rateLimit:
-#    average: 1
-#    burst: 2
-#
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit-low
+  namespace: default
+spec:
+  rateLimit:
+    average: 1
+    burst: 2
+
 #---
-#apiVersion: traefik.containo.us/v1alpha1
-#kind: Middleware
-#metadata:
-#  name: security-response-headers
-#  namespace: default
-#spec:
-#  headers:
-#    frameDeny: true
-#    sslRedirect: true
-#    browserXssFilter: true
-#    contentTypeNosniff: true
-#    stsIncludeSubdomains: true
-#    stsPreload: true
-#    stsSeconds: 31536000
-#
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: security-response-headers
+  namespace: default
+spec:
+  headers:
+    frameDeny: true
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+
 #---
 #apiVersion: traefik.containo.us/v1alpha1
 #kind: Middleware
@@ -105,23 +105,15 @@ metadata:
   namespace: default
 spec:
   entryPoints:
-    - http
+    - https
   routes:
-    - match: Host(`api.nvr.ai`) && PathPrefix(`/rbac`)
+    - match: Host(`some.domain.com`) && PathPrefix(`/`)
       kind: Rule
-#      middlewares:
-#        - name: rate-limit-low
-#        - name: forwardauth-rbac
-#        - name: path-replace-base
-#        - name: security-response-headers
       services:
         - name: rbac
           port: 8080
   tls:
-    secretName: tls-nvrai
-    options:
-      name: tlsoptions
-      namespace: default
+    certResolver: "letsencrypt"
 
 ---
 

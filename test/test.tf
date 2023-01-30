@@ -42,27 +42,27 @@ module "test" {
             port        = 443
             target_port = 443
             protocol    = "TCP"
-
-        }, {
-
-            name        = "dashboard"
-            port        = 8080
-            target_port = 8080
-            protocol    = "TCP"
-
-        }, {
-
-            name        = "webrtc-http"
-            port        = 9000
-            target_port = 9000
-            protocol    = "UDP"
-
-        }, {
-
-            name        = "webrtc-udp"
-            port        = 9001
-            target_port = 9001
-            protocol    = "UDP"
+            #
+            #        }, {
+            #
+            #            name        = "dashboard"
+            #            port        = 8080
+            #            target_port = 8080
+            #            protocol    = "TCP"
+            #
+            #        }, {
+            #
+            #            name        = "webrtc-http"
+            #            port        = 9000
+            #            target_port = 9000
+            #            protocol    = "UDP"
+            #
+            #        }, {
+            #
+            #            name        = "webrtc-udp"
+            #            port        = 9001
+            #            target_port = 9001
+            #            protocol    = "UDP"
 
         }
 
@@ -196,12 +196,12 @@ providers:
     allowExternalNameServices: true
 #    throttleDuration: 60s
     allowEmptyServices: true
-#  kubernetesIngress:
-#    namespaces:
-#      - default
-#    ingressClass: http
-#    throttleDuration: 42s
-#    allowEmptyServices: true
+  kubernetesIngress:
+    namespaces:
+      - default
+    ingressClass: treafik
+    throttleDuration: 42s
+    allowEmptyServices: true
 
 api:
   insecure: true
@@ -234,7 +234,7 @@ api:
 #            moduleName: github.com/traefik/plugin-blockpath
 #            version: v0.2.1
 log:
-  level: DEBUG
+  level: INFO
 EOF
 
 }
