@@ -7,9 +7,7 @@
 #}
 #
 provider "kubernetes" {
-
     config_path = "~/.kube/config"
-
 }
 
 module "test" {
@@ -24,8 +22,11 @@ module "test" {
     limit_cpu      = "100m"
     limit_memory   = "100Mi"
 
-    tls_name             = "tls-nvr.ai"
-    tls_store_namespaces = [ "default", "cameras", "backends" ]
+    tls_name             = "tls-traefik"
+    tls_store_namespaces = [
+        "default",
+        "convictionsai",
+    ]
 
     service_ports = [
 
@@ -34,6 +35,13 @@ module "test" {
             name        = "http"
             port        = 80
             target_port = 80
+            protocol    = "TCP"
+
+        }, {
+
+            name        = "dashboard"
+            port        = 8080
+            target_port = 8080
             protocol    = "TCP"
 
         }, {
@@ -96,32 +104,32 @@ entryPoints:
             writeTimeout: 2m
             readTimeout: 2m
 
-    metrics:
-        address: ":8081"
-    webrtc-udp-9001:
-        address: ":9001/udp"
-http:
-  routers:
-    api-http:
-      rule: "Path(`/`)"
-      tls:
-        secretName: tls-nvrai
-        options:
-          name: tlsoptions
-    middlewares:
-        https-redirect:
-            redirectScheme:
-                scheme: https
-
-https:
-  routers:
-    api-primary:
-      rule: "Path(`/`)"
-      tls:
-        secretName: tls-nvrai
-        options:
-          name: tlsoptions
-          namespace: default
+#    metrics:
+#        address: ":8081"
+#    webrtc-udp-9001:
+#        address: ":9001/udp"
+#http:
+#  routers:
+#    api-http:
+#      rule: "Path(`/`)"
+##      tls:
+##        secretName: tls-traefik
+##        options:
+##          name: tlsoptions
+##    middlewares:
+##        https-redirect:
+##            redirectScheme:
+##                scheme: https
+#
+#https:
+#  routers:
+#    api-primary:
+#      rule: "Path(`/`)"
+#      tls:
+#        secretName: tls-traefik
+#        options:
+#          name: tlsoptions
+#          namespace: default
 #      middlewares:
 #        - path-replace-base@kubernetes
 #        - path_base
@@ -140,45 +148,8 @@ https:
 #                middlewares:
 #                    - default-whitelist
 #                    - default-headers
-    tls:
-        secretName: tls-nvrai
-#udp:
-#  services:
-#    app:
-#      weighted:
-#        services:
-#        - name: appv1
-#          weight: 3
-#        - name: appv2
-#          weight: 1
-#
-#    appv1:
-#      loadBalancer:
-#        servers:
-#        - address: "1.1.1.1:53"
-#
-#    appv2:
-#      loadBalancer:
-#        servers:
-#        - address: "1.1.1.1:53"
-udp:
-  services:
-    webrtc-udp:
-      loadBalancer:
-        servers:
-        - address: "1.1.1.1:53"
-#
-#udp:
-#
-#  routers:
-#    webrtc-udp:
-#      service: whoami-tcp
-#
-#  services:
-#    webrtc-udp:
-#      loadBalancer:
-#        servers:
-#        - address: 1.1.1.1:53
+#    tls:
+#        secretName: tls-traefik
 ingress:
   enabled: true
   className: "http"
@@ -188,10 +159,8 @@ providers:
   kubernetesCRD:
     namespaces:
       - default
-      - infra
-      - backends
-      - frontends
-      - cameras
+      - rbacai
+      - convictionsai
     allowCrossNamespace: true
     allowExternalNameServices: true
 #    throttleDuration: 60s
@@ -199,7 +168,9 @@ providers:
   kubernetesIngress:
     namespaces:
       - default
-    ingressClass: treafik
+      - rbacai
+      - convictionsai
+    ingressClass: traefik
     throttleDuration: 42s
     allowEmptyServices: true
 
@@ -234,7 +205,7 @@ api:
 #            moduleName: github.com/traefik/plugin-blockpath
 #            version: v0.2.1
 log:
-  level: INFO
+  level: DEBUG
 EOF
 
 }
